@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "773626370758",
+    "project_id": "king-app-db894",
+    "storage_bucket": "king-app-db894.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:773626370758:android:864019758e94215ed5d5c7",
+        "android_client_info": {
+          "package_name": "com.lonewolf.kingapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "773626370758-a64og8g3c84ugpl1vehsielmlog744ns.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAX44kg9XSh0pf2Oin1Fej-PGOG3vcAt3Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "773626370758-a64og8g3c84ugpl1vehsielmlog744ns.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

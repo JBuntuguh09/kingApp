@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:id="@+id/linMain"
+    android:layout_margin="10dp"
+    android:background="@drawable/bg_list"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+   <LinearLayout
+       android:orientation="vertical"
+       android:layout_width="0dp"
+       android:layout_height="wrap_content"
+       android:layout_weight="8">
+       <LinearLayout
+           app:layout_constraintTop_toTopOf="parent"
+           android:id="@+id/linTitle"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           >
+           <TextView
+               android:textStyle="bold"
+               android:text="@string/title"
+               android:layout_weight="1"
+               android:layout_width="0dp"
+               android:layout_height="wrap_content"/>
+
+           <TextView
+               android:layout_weight="2"
+               android:layout_width="0dp"
+               android:layout_height="wrap_content"
+               android:id="@+id/edtTitle"/>
+       </LinearLayout>
+
+       <LinearLayout
+           android:layout_marginTop="10dp"
+           app:layout_constraintTop_toBottomOf="@+id/linTitle"
+           android:id="@+id/linType"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           >
+           <TextView
+               android:textStyle="bold"
+               android:text="@string/type"
+               android:layout_weight="1"
+               android:layout_width="0dp"
+               android:layout_height="wrap_content"/>
+
+           <TextView
+               android:layout_weight="2"
+               android:layout_width="0dp"
+               android:layout_height="wrap_content"
+               android:id="@+id/txtType"/>
+       </LinearLayout>
+
+       <LinearLayout
+           android:layout_marginTop="10dp"
+           app:layout_constraintTop_toBottomOf="@+id/linTitle"
+           android:id="@+id/linDate"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           >
+           <TextView
+               android:textStyle="bold"
+               android:text="@string/date"
+               android:layout_weight="1"
+               android:layout_width="0dp"
+               android:layout_height="wrap_content"/>
+
+           <TextView
+               android:layout_weight="2"
+               android:layout_width="0dp"
+               android:layout_height="wrap_content"
+               android:id="@+id/txtDate"/>
+       </LinearLayout>
+   </LinearLayout>
+    <ImageView
+        android:id="@+id/imgEdit"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_pencil_black_24dp"/>
+
+    <ImageView
+        android:id="@+id/imgClose"
+        android:layout_marginStart="10dp"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_close_thick_black_24dp"/>
+
+</LinearLayout>
