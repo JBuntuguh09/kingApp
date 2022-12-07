@@ -17,8 +17,12 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.lonewolf.kingapp.MainActivity
 import com.lonewolf.kingapp.R
+import com.lonewolf.kingapp.database.Note
+import com.lonewolf.kingapp.database.NoteViewModel
+import com.lonewolf.kingapp.databinding.FragmentNewAudioBinding
 import com.lonewolf.kingapp.resources.MyDb
 import com.lonewolf.kingapp.resources.ShortCut_To
 import com.lonewolf.kingapp.resources.UploadFiles
@@ -43,11 +47,7 @@ class New_Audio : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
-    private lateinit var record : ImageView
-    private lateinit var play : ImageView
-    private lateinit var timer : TextView
-    private lateinit var seekBar: SeekBar
-    private lateinit var submit : Button
+
     private  var mediaPlayer: MediaPlayer? = null
     private  var mediaRecorder: MediaRecorder? = null
     private lateinit var executorService: ExecutorService
@@ -61,8 +61,8 @@ class New_Audio : Fragment() {
     private var permissionsVal =1
     private var audioName = ""
     private lateinit var myDb : MyDb
-
-
+    private lateinit var binding: FragmentNewAudioBinding
+    private lateinit var noteViewModel: NoteViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,12 +79,8 @@ class New_Audio : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_new__audio, container, false)
 
-        myDb = MyDb(requireContext(), "kingdbs", null, 1)
-        record = view.findViewById(R.id.imgRecord)
-        play = view.findViewById(R.id.imgPlay)
-        timer = view.findViewById(R.id.txtTime)
-        seekBar = view.findViewById(R.id.seekBar)
-        submit = view.findViewById(R.id.btnSubmit)
+        binding =FragmentNewAudioBinding.bind(view)
+        noteViewModel = ViewModelProvider(this, defaultViewModelProviderFactory).get(NoteViewModel::class.java)
 
         mediaPlayer = MediaPlayer()
         executorService = Executors.newSingleThreadExecutor()
@@ -96,18 +92,18 @@ class New_Audio : Fragment() {
     }
 
     private fun getButtons() {
-        record.setOnClickListener {
+        binding.imgRecord.setOnClickListener {
             if (hasPermissions(requireContext(),
                     Manifest.permission.RECORD_AUDIO,
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
                 )){
                 if(!isRecording){
-                    Log.d("fffff", "hello222")
+
                     isRecording=true
 
                     executorService.execute {
-                        Log.d("rrrrr", "gggggg")
+
                         mediaRecorder = MediaRecorder()
                         mediaRecorder!!.setAudioSource(MediaRecorder.AudioSource.MIC)
                         mediaRecorder!!.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
@@ -126,8 +122,8 @@ class New_Audio : Fragment() {
 
 
                         requireActivity().runOnUiThread {
-                            play.visibility =View.GONE
-                            Picasso.with(requireContext()).load(R.drawable.ic_stop_black_48dp).into(record)
+                            binding.imgPlay.visibility =View.GONE
+                            Picasso.with(requireContext()).load(R.drawable.ic_stop_black_48dp).into(binding.imgRecord)
                             playerbleSecs = 0
                             seconds = 0
                             dummySecs = 0
@@ -147,25 +143,25 @@ class New_Audio : Fragment() {
                         isRecording = false
 
                         requireActivity().runOnUiThread {
-                           // play.visibility =View.GONE
-                            play.visibility = View.VISIBLE
-                            Picasso.with(requireContext()).load(R.drawable.ic_microphone_settings_black_48dp).into(record)
+
+                            binding.imgPlay.visibility = View.VISIBLE
+                            Picasso.with(requireContext()).load(R.drawable.ic_microphone_settings_black_48dp).into(binding.imgRecord)
                             handler.removeCallbacksAndMessages(null)
                         }
                     }
                 }
 
             }else{
-                Log.d("fffff", "hello")
+
                 requestStoragePermmissions()
             }
         }
 
-        play.setOnClickListener {
+        binding.imgPlay.setOnClickListener {
             if(!isPlaying){
                 if(path !=""){
                     try {
-                        Log.d("gets", "Here")
+
                         mediaPlayer!!.setDataSource(getRecordinPath())
                     }catch (e:Exception){
                         e.printStackTrace()
@@ -182,7 +178,7 @@ class New_Audio : Fragment() {
                 }
 
                 isPlaying = true
-                Picasso.with(requireContext()).load(R.drawable.ic_stop_black_48dp).into(play)
+                Picasso.with(requireContext()).load(R.drawable.ic_stop_black_48dp).into(binding.imgPlay)
                 runTimer()
             }else{
                 mediaPlayer!!.stop()
@@ -191,13 +187,13 @@ class New_Audio : Fragment() {
                 mediaPlayer = MediaPlayer()
                 isPlaying = false
                 seconds =0
-                Picasso.with(requireContext()).load(R.drawable.ic_play_black_48dp).into(play)
+                Picasso.with(requireContext()).load(R.drawable.ic_play_black_48dp).into(binding.imgPlay)
                 handler.removeCallbacksAndMessages(null)
 
             }
         }
 
-        submit.setOnClickListener {
+        binding.btnSubmit.setOnClickListener {
             if(isPlaying){
                 mediaPlayer!!.stop()
                 mediaPlayer!!.reset()
@@ -221,7 +217,9 @@ class New_Audio : Fragment() {
     }
 
     private fun offlineInsert() {
-        myDb.insertNote(audioName, audioName, path, "Audio")
+
+        val note = Note(0, audioName, audioName, "Audio", path, ShortCut_To.getCurrentDatewithTime(), ShortCut_To.getCurrentDatewithTime())
+        noteViewModel.insertNote(note)
         (activity as MainActivity).showPage(Start_Page(), "Start Page", "New Audio", "1")
         parentFragmentManager.popBackStack()
 
@@ -243,17 +241,17 @@ class New_Audio : Fragment() {
         handler.post(object : Runnable {
             override fun run() {
 
-                var minutes = (seconds%360)/60
-                var sec = seconds%60
-                var time = String.format(Locale.getDefault(), "%02d:%02d", minutes, sec)
-                timer.text = time
+                val minutes = (seconds%360)/60
+                val sec = seconds%60
+                val time = String.format(Locale.getDefault(), "%02d:%02d", minutes, sec)
+                binding.txtTime.text = time
 
                 if(isRecording || (isPlaying && playerbleSecs!=-1)){
                     seconds++
                     playerbleSecs--
 
                     if(playerbleSecs==-1 && isPlaying) {
-                        Picasso.with(requireContext()).load(R.drawable.ic_play_black_48dp).into(play)
+                        Picasso.with(requireContext()).load(R.drawable.ic_play_black_48dp).into(binding.imgPlay)
                         mediaPlayer!!.stop()
                         mediaPlayer!!.reset()
                         mediaPlayer!!.release()

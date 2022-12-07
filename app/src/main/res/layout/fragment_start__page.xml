@@ -36,12 +36,14 @@
         <com.google.android.material.textfield.TextInputEditText
             android:drawableEnd="@drawable/ic_magnify_black_24dp"
             android:id="@+id/edtSearch"
+            android:inputType="text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Search" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.recyclerview.widget.RecyclerView
+
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -61,6 +63,7 @@
         android:src="@android:drawable/ic_input_add"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
