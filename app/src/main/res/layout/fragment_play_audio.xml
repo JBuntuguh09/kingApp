@@ -19,17 +19,26 @@
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/guideHor"
         android:src="@drawable/speaker"
         android:id="@+id/imgGif"/>
     <ImageView
+
         android:layout_marginTop="10dp"
         app:layout_constraintTop_toBottomOf="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/guideHor"
         android:src="@drawable/speaker"
         android:id="@+id/imgPic"/>
 
+    <androidx.constraintlayout.widget.Guideline
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:id="@+id/guideHor"
+        app:layout_constraintGuide_percent="0.6"/>
 
     <TextView
         android:layout_marginTop="20dp"
@@ -40,13 +49,13 @@
         android:textSize="20sp"
         app:layout_constraintTop_toTopOf="@+id/seekBar"
         android:text="00:00"/>
-    <SeekBar
 
+    <SeekBar
         android:id="@+id/seekBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="20dp"
-        app:layout_constraintTop_toBottomOf="@+id/imgPic"
+        app:layout_constraintTop_toTopOf="@+id/guideHor"
         tools:layout_editor_absoluteX="10dp" />
 
     <ImageView

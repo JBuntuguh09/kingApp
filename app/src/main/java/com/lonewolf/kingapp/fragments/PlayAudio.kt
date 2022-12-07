@@ -11,12 +11,17 @@ import android.view.ViewGroup
 import android.widget.*
 import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.lonewolf.kingapp.MainActivity
 import com.lonewolf.kingapp.R
+import com.lonewolf.kingapp.database.NoteViewModel
+import com.lonewolf.kingapp.databinding.FragmentPlayAudioBinding
 import com.lonewolf.kingapp.resources.MyDb
 import com.squareup.picasso.Picasso
+import pl.droidsonroids.gif.GifDrawable
 import java.util.*
 import java.util.concurrent.ExecutorService
+import kotlin.math.roundToInt
 
 
 // TODO: Rename parameter arguments, choose names that match
@@ -33,28 +38,19 @@ class PlayAudio : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
-
-    private  lateinit var imgMain: pl.droidsonroids.gif.GifImageView
-    private  lateinit var imgStill:ImageView
-    private lateinit var mPlayer: MediaPlayer
     private lateinit var handler: Handler
-    private lateinit var record : ImageView
-    private lateinit var play : ImageView
-    private lateinit var timer : TextView
-    private lateinit var seekBar: SeekBar
-    private lateinit var submit : Button
+
       var mediaPlayer: MediaPlayer? = null
-    private  var mediaRecorder: MediaRecorder? = null
-    private lateinit var executorService: ExecutorService
     private var isRecording:Boolean =false
     private var isPlaying : Boolean =false
     private var seconds = 0
     private var dummySecs = 0
     private var playerbleSecs = 0
     private var path =""
-    private var permissionsVal =1
-    private var audioName = ""
-    private lateinit var myDb : MyDb
+
+    private lateinit var binding: FragmentPlayAudioBinding
+    private lateinit var noteViewModel: NoteViewModel
+    var nCheck = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,18 +67,14 @@ class PlayAudio : Fragment() {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_play_audio, container, false)
 
-        play = view.findViewById(R.id.imgPlay)
+        binding = FragmentPlayAudioBinding.bind(view)
+        noteViewModel = ViewModelProvider(this, defaultViewModelProviderFactory).get(NoteViewModel::class.java)
 
-        imgMain = view.findViewById(R.id.imgGif)
-        imgStill = view.findViewById(R.id.imgPic)
-        timer = view.findViewById(R.id.txtTime)
-        seekBar = view.findViewById(R.id.seekBar)
         path = (activity as MainActivity).uPath
-
         handler = Handler()
         mediaPlayer = MediaPlayer()
 
-
+        binding.seekBar.isEnabled = false
         getButtons()
 
         return view
@@ -103,43 +95,60 @@ class PlayAudio : Fragment() {
     }
 
     private fun getButtons() {
-        play.setOnClickListener {
-            if(!isPlaying){
-                if(path !=""){
-                    try {
+        if(path !=""){
+            try {
 
+                mediaPlayer!!.setDataSource(path)
+                mediaPlayer!!.prepare()
+
+                playerbleSecs = (mediaPlayer!!.duration)/1000
+
+            }catch (e:Exception){
+                e.printStackTrace()
+            }
+        }else{
+            Toast.makeText(requireContext(), "No recording present", Toast.LENGTH_SHORT).show()
+
+        }
+        binding.imgPlay.setOnClickListener {
+            if(!isPlaying){
+                if(nCheck==1){
+                    try {
                         mediaPlayer!!.setDataSource(path)
+                        mediaPlayer!!.prepare()
+                        playerbleSecs = (mediaPlayer!!.duration)/1000
+                        nCheck = 0
+
 
                     }catch (e:Exception){
                         e.printStackTrace()
                     }
-                }else{
-                    Toast.makeText(requireContext(), "No recording present", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
                 }
                 try {
-                    mediaPlayer!!.prepare()
-                    Log.d("mmmm", mediaPlayer!!.duration.toString())
-                    playerbleSecs = (mediaPlayer!!.duration)/1000
-                   // seconds = mediaPlayer!!.duration
+                    seconds=1
+
                     mediaPlayer!!.start()
+                    binding.imgPic.visibility= View.GONE
+                    binding.imgGif.visibility = View.VISIBLE
+                    binding.seekBar.isEnabled = true
                 }catch (e:Exception){
                     e.printStackTrace()
                 }
 
                 isPlaying = true
-                Picasso.with(requireContext()).load(R.drawable.ic_pause_black_48dp).into(play)
+                Picasso.with(requireContext()).load(R.drawable.ic_pause_black_48dp).into(binding.imgPlay)
                 runTimer()
-                trackAudio(seekBar, mediaPlayer!!)
+                trackAudio(binding.seekBar, mediaPlayer!!)
             }else{
-                mediaPlayer!!.stop()
-                mediaPlayer!!.release()
-                mediaPlayer = null
-                mediaPlayer = MediaPlayer()
+                mediaPlayer!!.pause()
+
                 isPlaying = false
-                seconds =0
-                Picasso.with(requireContext()).load(R.drawable.ic_play_black_48dp).into(play)
+
+                Picasso.with(requireContext()).load(R.drawable.ic_play_black_48dp).into(binding.imgPlay)
+                binding.imgPic.visibility= View.VISIBLE
+                binding.imgGif.visibility = View.GONE
                 handler.removeCallbacksAndMessages(null)
+
 
             }
         }
@@ -150,17 +159,19 @@ class PlayAudio : Fragment() {
         handler.post(object : Runnable {
             override fun run() {
 
-                var minutes = (seconds%360)/60
-                var sec = seconds%60
-                var time = String.format(Locale.getDefault(), "%02d:%02d", minutes, sec)
-                timer.text = time
+                val minutes = (seconds%360)/60
+                val sec = seconds%60
+                val time = String.format(Locale.getDefault(), "%02d:%02d", minutes, sec)
+                binding.txtTime.text = time
 
                 if(isRecording || (isPlaying && playerbleSecs!=-1)){
                     seconds++
                     playerbleSecs--
 
                     if(playerbleSecs<=-1 && isPlaying) {
-                        Picasso.with(requireContext()).load(R.drawable.ic_play_black_48dp).into(play)
+                        Picasso.with(requireContext()).load(R.drawable.ic_play_black_48dp).into(binding.imgPlay)
+                        binding.imgPic.visibility= View.VISIBLE
+                        binding.imgGif.visibility = View.GONE
                         mediaPlayer!!.stop()
                         mediaPlayer!!.reset()
                         mediaPlayer!!.release()
@@ -170,8 +181,9 @@ class PlayAudio : Fragment() {
                         mediaPlayer = MediaPlayer()
                         playerbleSecs = dummySecs
                         seconds = 0
+                        nCheck = 1
                         handler.removeCallbacksAndMessages(null)
-
+                        binding.seekBar.isEnabled = false
                         return
                     }
                 }
@@ -184,16 +196,14 @@ class PlayAudio : Fragment() {
         seeker.progress = 0
         val gogu = media.duration
 
-        Log.d("lllll", gogu.toString())
         seeker.max = gogu
         val timerz = Timer()
-            timerz.scheduleAtFixedRate(object : TimerTask() {
+        timerz.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
 
                 try {
                     val ggoo = media.duration
 
-                    Log.d("mmmmm2", ggoo.toString())
                     seeker.progress =
                         ((gogu.toDouble() / ggoo.toDouble()) * media.currentPosition.toDouble()).toInt()
 
@@ -204,20 +214,22 @@ class PlayAudio : Fragment() {
                 }
             }
         }, 0, 1000)
-
+        val ggoo = media.duration
         seeker.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    val ggoo = media.duration
-                    Log.d("mmmmm", ggoo.toString())
+
+
                     val bm = (ggoo.toDouble() / gogu.toDouble()) * progress
-                    //  Log.d("open", String.valueOf(progress)+"//"+mediaPlayer1.getDuration()+"//"+gogu+"//"+bm+"//"+actSeek);
-                    media.seekTo(bm.toInt())
+
+
                     if (media.isPlaying) {
+                        media.seekTo(bm.toInt())
+                        seconds = (media.currentPosition.toDouble()/1000).roundToInt()
+                        playerbleSecs = ((ggoo.toDouble()/1000) - (media.currentPosition.toDouble()/1000)).roundToInt()
                         media.start()
                     }
 
-                    //    seekMeter(mediaPlayer1, gogu1);
                 }
             }
 

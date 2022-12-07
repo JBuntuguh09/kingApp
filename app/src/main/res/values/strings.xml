@@ -12,5 +12,6 @@
     <string name="title">Title</string>
     <string name="date">Date</string>
     <string name="save_audio">Save Audio</string>
+    <string name="capture_text">Capture Text</string>
 
 </resources>

@@ -4,11 +4,20 @@ import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.*
 import android.widget.Button
 import android.widget.EditText
+import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,7 +25,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.lonewolf.kingapp.MainActivity
 import com.lonewolf.kingapp.R
 import com.lonewolf.kingapp.adapters.RecyclerMedia
+import com.lonewolf.kingapp.database.Note
+import com.lonewolf.kingapp.database.NoteViewModel
+import com.lonewolf.kingapp.databinding.FragmentStartPageBinding
 import com.lonewolf.kingapp.resources.MyDb
+
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -32,11 +45,16 @@ class Start_Page : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
-    private lateinit var search : EditText
-    private lateinit var addNew : FloatingActionButton
+
     private lateinit var myDb: MyDb
     private lateinit var linearLayoutManager: LinearLayoutManager
     private lateinit var recyclerView: RecyclerView
+    private  var liveData: MutableLiveData<String> = MutableLiveData()
+    private var searchTerm = ""
+
+    private lateinit var noteViewModel: NoteViewModel
+    private lateinit var liveDatas: LiveData<List<Note>>
+    private lateinit var binding: FragmentStartPageBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,71 +70,99 @@ class Start_Page : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_start__page, container, false)
-
+        binding = FragmentStartPageBinding.bind(view)
         myDb = MyDb(requireContext(), "kingdbs", null, 1)
-        search = view.findViewById(R.id.edtSearch)
-        addNew = view.findViewById(R.id.floatingActionButton)
+
         recyclerView = view.findViewById(R.id.recyclerView)
         linearLayoutManager = LinearLayoutManager(requireContext())
+        liveData.observe(viewLifecycleOwner, Observer<String> { searchText: String? ->
+            // perform search
+            searchTerm = searchText!!
+            //getOffLine()
+        })
+        noteViewModel = ViewModelProvider(this, defaultViewModelProviderFactory).get(NoteViewModel::class.java)
+        noteViewModel.liveData.observe(viewLifecycleOwner) { data ->
+            if (data.isNotEmpty()) {
+                println(data)
+                getOffLine(data)
+            }
+        }
+
+
+
 
         getButtons()
-        getOffLine()
+        //getOffLine()
         return  view
     }
 
     private fun getButtons() {
-        search.setOnTouchListener { v: View?, event: MotionEvent ->
+
+        binding.edtSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) =
+                Unit
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                // use the text
+
+                liveData.postValue(s.toString())
+            }
+            })
+
+        binding.edtSearch.setOnTouchListener { v: View?, event: MotionEvent ->
             val DRAWABLE_LEFT = 0
             val DRAWABLE_TOP = 1
             val DRAWABLE_RIGHT = 2
             val DRAWABLE_BOTTOM = 3
             if (event.action == MotionEvent.ACTION_UP) {
-                if (event.rawX >= search.right - search.compoundDrawables[DRAWABLE_RIGHT].bounds.width()
+                if (event.rawX >= binding.edtSearch.right - binding.edtSearch.compoundDrawables[DRAWABLE_RIGHT].bounds.width()
                 ) {
 //                        Date_Picker datepicker = new Date_Picker();
 //                        datepicker.setEditTextDisplay(topic);
 //                        datepicker.show(getFragmentManager(), null);
-
+                       // getOffLine()
                     return@setOnTouchListener true
                 }
             }
             false
         }
 
-        addNew.setOnClickListener {
+        binding.floatingActionButton.setOnClickListener {
             showBottom()
         }
     }
 
-    private fun getOffLine(){
-        val curs = myDb.getData("select * from ${myDb.MainTb};")
-        val arrayList = ArrayList<HashMap<String, String>>()
-        Log.d("hhhhhhh", curs.toString())
-        try {
-            if (curs != null) {
-                for(a in 0 until curs.count){
-                    curs.moveToPosition(a)
-                    val hashMap = HashMap<String, String>()
-                    hashMap["Title"] = curs.getString(curs.getColumnIndex("Title"))
-                    hashMap["Id"] = curs.getString(curs.getColumnIndex("Main_Id"))
-                    hashMap["Content"] = curs.getString(curs.getColumnIndex("Content"))
-                    hashMap["Path"] = curs.getString(curs.getColumnIndex("Path"))
-                    hashMap["cDatetime"] = curs.getString(curs.getColumnIndex("Created_Datetime"))
-                    hashMap["Type"] = curs.getString(curs.getColumnIndex("Type"))
+    private fun getOffLine(data : List<Note>){
 
+        val arrayList = ArrayList<HashMap<String, String>>()
+
+        try {
+                for(aVal in data){
+                    val hashMap = HashMap<String, String>()
+                    hashMap["Title"] = aVal.Title
+                    hashMap["Id"] = aVal.Note_Id.toString()
+                    hashMap["Content"] = aVal.Content
+                    hashMap["Path"] = aVal.Path
+                    hashMap["cDatetime"] = aVal.CreatedDateTime
+                    hashMap["uDatetime"] = aVal.UpdatedDateTime
+                    hashMap["Type"] = aVal.Type
 
                     arrayList.add(hashMap)
                 }
 
 
                 if(arrayList.size>0){
+                    println(arrayList.toString())
                     val recyclerViewList = RecyclerMedia(requireActivity(), arrayList)
-                    recyclerView.layoutManager = linearLayoutManager
-                    recyclerView.itemAnimator = DefaultItemAnimator()
-                    recyclerView.adapter = recyclerViewList
+                    binding.recyclerView.layoutManager = linearLayoutManager
+                    binding.recyclerView.itemAnimator = DefaultItemAnimator()
+                    binding.recyclerView.adapter = recyclerViewList
+                }else{
+                    binding.recyclerView.removeAllViews()
                 }
 
-            }
+
         }catch (e : Exception){
             e.printStackTrace()
         }
